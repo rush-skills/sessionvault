@@ -36,9 +36,11 @@ if ! command -v npm >/dev/null 2>&1; then
 fi
 say "› Installing sessionvault…"
 if npm install -g sessionvault >/dev/null 2>&1; then
-  ok "Installed sessionvault"
+  ok "Installed sessionvault from npm"
+elif npm install -g github:rush-skills/sessionvault >/dev/null 2>&1; then
+  ok "Installed sessionvault from GitHub"
 else
-  die "npm could not install sessionvault. Try: sudo npm install -g sessionvault"
+  die "npm could not install sessionvault. Try: sudo npm install -g github:rush-skills/sessionvault"
 fi
 
 # 3. Wrangler, for the default backend

@@ -1,5 +1,10 @@
 # SessionVault
 
+[![CI](https://github.com/rush-skills/sessionvault/actions/workflows/ci.yml/badge.svg)](https://github.com/rush-skills/sessionvault/actions/workflows/ci.yml)
+[![node](https://img.shields.io/badge/node-%E2%89%A518.17-brightgreen)](https://nodejs.org)
+[![licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+[![dependencies](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)](package.json)
+
 Back up the session history of every AI coding agent on your machine to Cloudflare R2.
 
 Claude Code, Codex, Cursor, Gemini CLI, Copilot, Cline, Windsurf and 30 more tools keep
@@ -33,27 +38,26 @@ machine macbook-air-3d62bb   backend wrangler   bucket ai-sessions
 
 ## Install
 
-One command. It needs Node 18 or later.
+One command. It needs Node 18 or later, and nothing else.
 
 ```bash
-npm install -g sessionvault
+npm install -g github:rush-skills/sessionvault
 ```
 
 Or run it without an install:
 
 ```bash
-npx sessionvault init
+npx github:rush-skills/sessionvault init
 ```
 
-macOS and Linux users can also use the script:
+The package is not on the npm registry yet. When it is, `npm install -g sessionvault`
+will work as well, and the installer scripts will use it:
 
 ```bash
+# macOS and Linux
 curl -fsSL https://raw.githubusercontent.com/rush-skills/sessionvault/main/install.sh | sh
-```
 
-Windows users can use PowerShell:
-
-```powershell
+# Windows
 irm https://raw.githubusercontent.com/rush-skills/sessionvault/main/install.ps1 | iex
 ```
 
@@ -67,9 +71,11 @@ sessionvault init
 `init` finds your agents, creates the bucket, writes the config, runs the first backup and
 offers to repeat it every two hours. It asks nothing that it can work out on its own.
 
-To set up a second machine, point it at the same bucket:
+To set up a second machine, run three commands:
 
 ```bash
+npm install -g github:rush-skills/sessionvault
+wrangler login
 sessionvault init --bucket ai-sessions --yes
 ```
 

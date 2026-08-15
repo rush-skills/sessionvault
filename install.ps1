@@ -25,6 +25,10 @@ Write-Host "+ Node $(node -v)" -ForegroundColor Green
 Write-Host "> Installing sessionvault..."
 npm install -g sessionvault | Out-Null
 if ($LASTEXITCODE -ne 0) {
+  Write-Host "  Not on npm yet. Installing from GitHub..."
+  npm install -g github:rush-skills/sessionvault | Out-Null
+}
+if ($LASTEXITCODE -ne 0) {
   Write-Host "x npm could not install sessionvault." -ForegroundColor Red
   exit 1
 }
