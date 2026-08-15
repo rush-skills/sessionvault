@@ -19,6 +19,7 @@ export class WranglerBackend {
     this.bucket = config.bucket;
     this.remoteFlag = config.wranglerRemoteFlag !== false;
     this.command = null;
+    this.cwd = null;
     this.jurisdiction = config.jurisdiction || null;
   }
 
@@ -40,6 +41,7 @@ export class WranglerBackend {
     for (const candidate of candidates) {
       const result = await run(candidate.command, [...candidate.prefix, '--version'], {
         timeout: 180_000,
+        cwd: this.#workingDirectory(),
       });
       if (result.ok) {
         this.command = candidate;
@@ -52,28 +54,52 @@ export class WranglerBackend {
     );
   }
 
+  /**
+   * A writable directory to run Wrangler in.
+   *
+   * Wrangler creates `<cwd>/.wrangler/cache` on every call. Two problems
+   * follow. Under launchd or systemd the working directory is `/`, which is
+   * not writable, and the upload fails. From a project folder, Wrangler
+   * drops a `.wrangler` directory into the user's repository. A directory of
+   * our own solves both.
+   */
+  #workingDirectory() {
+    if (!this.cwd) {
+      this.cwd = path.join(os.tmpdir(), 'sessionvault-wrangler');
+      fs.mkdirSync(this.cwd, { recursive: true });
+    }
+    return this.cwd;
+  }
+
   async #r2(args, options = {}) {
     const { command, prefix } = await this.resolve();
     const full = [...prefix, 'r2', 'object', ...args];
     if (this.remoteFlag) full.push('--remote');
     if (this.jurisdiction) full.push('--jurisdiction', this.jurisdiction);
-    return run(command, full, options);
+    return run(command, full, { cwd: this.#workingDirectory(), ...options });
   }
 
   async whoami() {
     const { command, prefix } = await this.resolve();
-    const result = await run(command, [...prefix, 'whoami'], { timeout: 180_000 });
+    const result = await run(command, [...prefix, 'whoami'], {
+      timeout: 180_000,
+      cwd: this.#workingDirectory(),
+    });
     return result.stdout || result.stderr;
   }
 
   async ensureBucket() {
     const { command, prefix } = await this.resolve();
-    const list = await run(command, [...prefix, 'r2', 'bucket', 'list'], { timeout: 180_000 });
+    const list = await run(command, [...prefix, 'r2', 'bucket', 'list'], {
+      timeout: 180_000,
+      cwd: this.#workingDirectory(),
+    });
     if (list.ok && new RegExp(`name:\\s+${escapeRegExp(this.bucket)}\\b`).test(list.stdout)) {
       return { created: false };
     }
     const create = await run(command, [...prefix, 'r2', 'bucket', 'create', this.bucket], {
       timeout: 180_000,
+      cwd: this.#workingDirectory(),
     });
     if (!create.ok && !/already (exists|owned)/i.test(create.stderr)) {
       throw new Error(`could not create the bucket ${this.bucket}: ${create.stderr.trim()}`);
