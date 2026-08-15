@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# This workflow reads no user-supplied event data. It uses only matrix values
+# and runner paths, so no step can be influenced by a title or a branch name.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test ${{ matrix.os }} / node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # SessionVault must work on every platform an agent runs on.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [18, 20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Run the tests
+        run: npm test
+
+      - name: The CLI must start
+        run: |
+          node bin/sessionvault.js --version
+          node bin/sessionvault.js known
+          node bin/sessionvault.js --help
+
+      - name: Scan this runner for agents
+        run: node bin/sessionvault.js agents
+
+      - name: A backup to a local folder must work end to end
+        shell: bash
+        run: |
+          set -eux
+          mkdir -p "$RUNNER_TEMP/fake/.claude/projects/-demo"
+          printf '{"a":1}\n' > "$RUNNER_TEMP/fake/.claude/projects/-demo/session.jsonl"
+          export HOME="$RUNNER_TEMP/fake"
+          export USERPROFILE="$RUNNER_TEMP/fake"
+          export SESSIONVAULT_HOME="$RUNNER_TEMP/state"
+          node "$GITHUB_WORKSPACE/bin/sessionvault.js" backup \
+            --backend local --local-root "$RUNNER_TEMP/archive" --bucket ci --only claude-code
+          node "$GITHUB_WORKSPACE/bin/sessionvault.js" restore \
+            --backend local --local-root "$RUNNER_TEMP/archive" --bucket ci --to "$RUNNER_TEMP/restored"
+          test -f "$RUNNER_TEMP/restored/claude-code/home/.claude/projects/-demo/session.jsonl"
+
+  package:
+    name: the package must be installable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm pack --dry-run
+      - name: There must be no runtime dependency
+        run: |
+          test "$(node -p "Object.keys(require('./package.json').dependencies || {}).length")" = "0"

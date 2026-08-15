@@ -1,0 +1,54 @@
+{
+  "name": "sessionvault",
+  "version": "0.1.0",
+  "description": "Back up the session history of every AI coding agent on your machine to Cloudflare R2.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Ankur Singh",
+  "homepage": "https://github.com/rush-skills/sessionvault#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rush-skills/sessionvault.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rush-skills/sessionvault/issues"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "backup",
+    "archive",
+    "cloudflare",
+    "r2",
+    "claude-code",
+    "codex",
+    "cursor",
+    "gemini-cli",
+    "session-history"
+  ],
+  "bin": {
+    "sessionvault": "bin/sessionvault.js",
+    "sv": "bin/sessionvault.js"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./registry": "./src/registry.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "install.sh",
+    "install.ps1",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "start": "node bin/sessionvault.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
